@@ -21,28 +21,52 @@ pip install -r requirements.txt
 
 ## 2. Running Inference Scripts
 
-### Text-to-Text Retrieval
+### Text Embeddings and Task Prompts (Base Model Inference)
 
 - **Online / Standard Load**
   ```bash
-  python app/fine-tuning-embeddinggemma-with-sentence-transformers_on.py
+  python app/inference_embeddinggemma_with_sentence_transformers_on.py
   ```
 
 - **Offline (Local Cache Only)**
   ```bash
-  HF_HUB_OFFLINE=1 python app/fine-tuning-embeddinggemma-with-sentence-transformers_off.py
+  HF_HUB_OFFLINE=1 python app/inference_embeddinggemma_with_sentence_transformers_off.py
+  ```
+
+### Multimodal Embeddings & Working with Images (Base Model)
+
+- **Online / Standard Load**
+  ```bash
+  python app/multimodal_embeddinggemma_with_sentence_transformers_on.py
+  ```
+
+- **Offline / Local Images (Uses images from `./assets/`)**
+  ```bash
+  HF_HUB_OFFLINE=1 python app/multimodal_embeddinggemma_with_sentence_transformers_off.py
+  ```
+
+### Fine-Tuned Text-to-Text Retrieval
+
+- **Online / Standard Load**
+  ```bash
+  python app/fine_tuning_embeddinggemma_with_sentence_transformers_on.py
+  ```
+
+- **Offline (Local Cache Only)**
+  ```bash
+  HF_HUB_OFFLINE=1 python app/fine_tuning_embeddinggemma_with_sentence_transformers_off.py
   ```
 
 ### Multimodal Retrieval (Text-to-Image)
 
 - **Online (Fetches remote image URLs)**
   ```bash
-  python app/fine-tuning-multimodal-embeddinggemma-with-sentence-transformers_on.py
+  python app/fine_tuning_multimodal_embeddinggemma_with_sentence_transformers_on.py
   ```
 
 - **Offline / Local Images (Uses images from `./assets/`)**
   ```bash
-  HF_HUB_OFFLINE=1 python app/fine-tuning-multimodal-embeddinggemma-with-sentence-transformers_off.py
+  HF_HUB_OFFLINE=1 python app/fine_tuning_multimodal_embeddinggemma_with_sentence_transformers_off.py
   ```
 
 ---
