@@ -1,0 +1,6 @@
+sentence-transformers>=6.0.0
+torch
+torchcodec>=0.16.0
+torchvision
+Pillow
+
