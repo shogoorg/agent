@@ -3,4 +3,6 @@ torch
 torchcodec>=0.16.0
 torchvision
 Pillow
-
+litert-lm-api
+edgeparse
+qdrant-edge-py

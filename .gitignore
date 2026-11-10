@@ -4,3 +4,8 @@
 __pycache__/
 *.pyc
 .DS_Store
+
+# EmbeddingGemma LiteRT RAG generated files
+embeddinggemma/data/
+embeddinggemma/db_gemma/
+embeddinggemma/.cache/
