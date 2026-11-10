@@ -123,6 +123,10 @@ Files created in the project root: `data/gemma4_technical_report.pdf` (document)
 
 ---
 
+> **Benchmark**: Execution time and memory usage of every script on a low-spec CPU-only PC are documented in [docs/benchmark.md](docs/benchmark.md).
+
+---
+
 ## 3. Notebooks
 
 The `notebooks/` directory contains interactive Jupyter notebooks for training, fine-tuning, and exploratory inference:
