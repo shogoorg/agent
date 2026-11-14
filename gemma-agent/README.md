@@ -109,59 +109,49 @@ agents-cli install
 
 ```
 
-> **Note**: Run all commands from the **project root directory** (`gemma-agent`) because scripts reference local image assets under `./assets/`. If using `uv`, you can also prefix commands with `uv run` (e.g., `uv run python app/...`).
+> **Note**: Run all commands from the **project root directory** (`gemma-agent`) because scripts reference local image assets under `./assets/`. (e.g., `uv run python ../apps/inference_embeddinggemma_with_sentence_transformers.py`).
 
 ---
 
 ## 2. Running Inference Scripts
 
+All scripts in `../apps/` automatically detect whether required models and assets are cached locally.
+- **First run**: Automatically downloads the necessary models and files.
+- **Subsequent runs**: Automatically uses the local cache for offline execution.
+
+Run all commands from the `gemma-agent` directory:
+
 ### Text Embeddings and Task Prompts (Base Model Inference)
 
-- **Online / Standard Load**
-  ```bash
-  uv run python app/inference_embeddinggemma_with_sentence_transformers_on.py
-  ```
+Generate text embeddings and compute semantic similarity with/without task prompts (STS):
 
-- **Offline (Local Cache Only)**
-  ```bash
-  HF_HUB_OFFLINE=1 uv run python app/inference_embeddinggemma_with_sentence_transformers_off.py
-  ```
+```bash
+uv run python ../apps/inference_embeddinggemma_with_sentence_transformers.py
+```
 
 ### Multimodal Embeddings & Working with Images (Base Model)
 
-- **Online / Standard Load**
-  ```bash
-  uv run python app/multimodal_embeddinggemma_with_sentence_transformers_on.py
-  ```
+Compute cross-modal similarity between text and images (auto-detects local images in `./assets/`):
 
-- **Offline / Local Images (Uses images from `./assets/`)**
-  ```bash
-  HF_HUB_OFFLINE=1 uv run python app/multimodal_embeddinggemma_with_sentence_transformers_off.py
-  ```
+```bash
+uv run python ../apps/multimodal_embeddinggemma_with_sentence_transformers.py
+```
 
 ### Fine-Tuned Text-to-Text Retrieval
 
-- **Online / Standard Load**
-  ```bash
-  uv run python app/fine_tuning_embeddinggemma_with_sentence_transformers_on.py
-  ```
+Evaluate retrieval performance with your fine-tuned model:
 
-- **Offline (Local Cache Only)**
-  ```bash
-  HF_HUB_OFFLINE=1 uv run python app/fine_tuning_embeddinggemma_with_sentence_transformers_off.py
-  ```
+```bash
+uv run python ../apps/fine_tuning_embeddinggemma_with_sentence_transformers.py
+```
 
 ### Multimodal Retrieval (Text-to-Image)
 
-- **Online (Fetches remote image URLs)**
-  ```bash
-  uv run python app/fine_tuning_multimodal_embeddinggemma_with_sentence_transformers_on.py
-  ```
+Retrieve relevant images based on text queries with your fine-tuned multimodal model:
 
-- **Offline / Local Images (Uses images from `./assets/`)**
-  ```bash
-  HF_HUB_OFFLINE=1 uv run python app/fine_tuning_multimodal_embeddinggemma_with_sentence_transformers_off.py
-  ```
+```bash
+uv run python ../apps/fine_tuning_multimodal_embeddinggemma_with_sentence_transformers.py
+```
 
 ### RAG with EmbeddingGemma 2 (Low-Spec CPU Edition)
 
@@ -174,17 +164,9 @@ The script is tuned for low-spec, CPU-only PCs (tested on Intel N100 / 4 cores /
 - The two models are **never loaded at the same time**: all retrieval runs first, the embedding model is freed, then the generation model is loaded.
 - Tunables at the top of the script: `NUM_THREADS`, `MAX_NUM_TOKENS` (context size), `MAX_OUTPUT_TOKENS`.
 
-**Dependency**: `litert-lm-api` (included in `pyproject.toml`).
-
-- **Online / Standard Load** (downloads ~3 GB of models on first run)
-  ```bash
-  uv run python app/RAG_with_EmbeddingGemma_on.py
-  ```
-
-- **Offline (Local Cache Only)** (run the online version once first so both models are cached)
-  ```bash
-  HF_HUB_OFFLINE=1 uv run python app/RAG_with_EmbeddingGemma_off.py
-  ```
+```bash
+uv run python ../apps/RAG_with_EmbeddingGemma.py
+```
 
 > **Note**: On the first run, LiteRT-LM also builds an XNNPACK cache file next to the `.litertlm` model, so start-up is slow. Later runs are faster.
 > If the PC runs out of memory, close other applications or lower `MAX_NUM_TOKENS` / `NUM_THREADS`.
@@ -201,19 +183,11 @@ Low-spec CPU design (tested on Intel N100 / 4 cores / 3.7 GB RAM / no GPU):
 - The two models are **never loaded at the same time**: all queries are embedded and retrieved first, the embedding engine is closed, then Gemma is loaded.
 - Tunables at the top of the script: `NUM_THREADS`, `EMBED_BATCH_SIZE`, `MAX_NUM_TOKENS`, `RETRIEVAL_LIMIT`. Edit `QUERIES` to ask your own questions.
 
-**Dependencies**: `litert-lm-api`, `edgeparse`, `qdrant-edge-py` (included in `pyproject.toml`).
-
 Files created in the project root: `data/gemma4_technical_report.pdf` (document), `db_gemma/` (vector index), `.cache/` (LiteRT-LM embedding cache).
 
-- **Online / Standard Load** (downloads the two `.litertlm` models and the PDF on first run)
-  ```bash
-  uv run python app/EmbeddingGemma2_LiteRT_RAG_on.py
-  ```
-
-- **Offline (Local Cache Only)** (run the online version once first so the models and `data/gemma4_technical_report.pdf` exist locally)
-  ```bash
-  HF_HUB_OFFLINE=1 uv run python app/EmbeddingGemma2_LiteRT_RAG_off.py
-  ```
+```bash
+uv run python ../apps/EmbeddingGemma2_LiteRT_RAG.py
+```
 
 ---
 

@@ -1,14 +1,25 @@
 import torch
 from sentence_transformers import SentenceTransformer
 
-# 1. Model Initialization (offline mode using locally cached weights)
+# 1. Model Initialization (optimized for text-only inference to minimize memory usage)
+# Auto-detects local cache: loads offline if cached, downloads online otherwise.
 model_id = "google/embeddinggemma-2"
-model = SentenceTransformer(
-    model_id,
-    config_kwargs={"vision_config": None, "audio_config": None},
-    model_kwargs={"torch_dtype": torch.float32},
-    local_files_only=True,
-)
+try:
+    model = SentenceTransformer(
+        model_id,
+        config_kwargs={"vision_config": None, "audio_config": None},
+        model_kwargs={"torch_dtype": torch.float32},
+        local_files_only=True,
+    )
+    print(f"Loaded model from local cache: {model_id}")
+except Exception:
+    print(f"Downloading model from Hugging Face: {model_id}...")
+    model = SentenceTransformer(
+        model_id,
+        config_kwargs={"vision_config": None, "audio_config": None},
+        model_kwargs={"torch_dtype": torch.float32},
+        local_files_only=False,
+    )
 
 print(f"Device: {model.device}")
 print(f"Dtype: {model.dtype}")

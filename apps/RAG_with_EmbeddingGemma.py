@@ -1,7 +1,8 @@
-"""RAG with EmbeddingGemma 2 (low-spec CPU edition, offline mode).
+"""RAG with EmbeddingGemma 2 (low-spec CPU edition).
 
-Offline mode: both models are loaded from the local Hugging Face cache only
-(local_files_only=True). Run the online version once first to download them.
+Auto-detects local cache:
+  - If models are already downloaded locally, loads them offline.
+  - If not, automatically downloads them on the first run.
 
 Designed for low-memory, CPU-only PCs (e.g. 4 cores / 4 GB RAM / no GPU):
   - Retrieval: EmbeddingGemma 2 via Sentence Transformers (text-only, vision/audio encoders disabled).
@@ -158,16 +159,27 @@ def retrieve(model, query):
     return best_document
 
 
-# 4. Retrieval Phase: Load the Embedding Model (offline mode using locally cached weights)
+# 4. Retrieval Phase: Load the Embedding Model (text-only to minimize memory usage)
 # Note: EmbeddingGemma 2 activations are incompatible with float16. Use bfloat16 or float32.
 embedding_model_id = "google/embeddinggemma-2"
-model = SentenceTransformer(
-    embedding_model_id,
-    device="cpu",
-    config_kwargs={"vision_config": None, "audio_config": None},
-    model_kwargs={"torch_dtype": torch.float32},
-    local_files_only=True,
-)
+try:
+    model = SentenceTransformer(
+        embedding_model_id,
+        device="cpu",
+        config_kwargs={"vision_config": None, "audio_config": None},
+        model_kwargs={"torch_dtype": torch.float32},
+        local_files_only=True,
+    )
+    print(f"Loaded embedding model from local cache: {embedding_model_id}")
+except Exception:
+    print(f"Downloading embedding model from Hugging Face: {embedding_model_id}...")
+    model = SentenceTransformer(
+        embedding_model_id,
+        device="cpu",
+        config_kwargs={"vision_config": None, "audio_config": None},
+        model_kwargs={"torch_dtype": torch.float32},
+        local_files_only=False,
+    )
 
 print(f"Device: {model.device}")
 print(f"Dtype: {model.dtype}")
@@ -191,14 +203,24 @@ del model
 gc.collect()
 print("=" * 60)
 
-# 5. Generation Phase: Load Gemma 4 E2B (LiteRT-LM, CPU backend, locally cached file)
+# 5. Generation Phase: Load Gemma 4 E2B (LiteRT-LM, CPU backend)
 litert_lm.set_min_log_severity(litert_lm.LogSeverity.ERROR)
 
-llm_model_path = hf_hub_download(
-    repo_id="litert-community/gemma-4-E2B-it-litert-lm",
-    filename="gemma-4-E2B-it.litertlm",
-    local_files_only=True,
-)
+try:
+    llm_model_path = hf_hub_download(
+        repo_id="litert-community/gemma-4-E2B-it-litert-lm",
+        filename="gemma-4-E2B-it.litertlm",
+        local_files_only=True,
+    )
+    print(f"Loaded generation model from cache: {llm_model_path}")
+except Exception:
+    print("Downloading generation model from Hugging Face...")
+    llm_model_path = hf_hub_download(
+        repo_id="litert-community/gemma-4-E2B-it-litert-lm",
+        filename="gemma-4-E2B-it.litertlm",
+        local_files_only=False,
+    )
+
 print(f"Loading generation model: {llm_model_path}")
 generation_engine = litert_lm.Engine(
     llm_model_path,

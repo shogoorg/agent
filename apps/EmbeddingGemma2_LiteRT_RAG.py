@@ -1,5 +1,9 @@
 """EmbeddingGemma 2 LiteRT: RAG on Edge (low-spec CPU edition).
 
+Auto-detects local cache:
+  - If models and document are already downloaded locally, loads them offline.
+  - If not, automatically downloads them on the first run.
+
 On-device RAG over the Gemma 4 technical report:
 parse and chunk the PDF -> store embeddings in Qdrant Edge -> answer questions with Gemma 4 E2B.
 
@@ -36,7 +40,7 @@ EMBED_BATCH_SIZE = 8  # Chunks embedded per batch (smaller = less memory)
 MAX_NUM_TOKENS = 2048  # Gemma context size (smaller = less KV-cache memory)
 RETRIEVAL_LIMIT = 2  # Number of chunks passed to Gemma as context
 
-# Paths (relative to the project root `embeddinggemma`)
+# Paths (relative to the project root)
 DOCUMENT_URL = "https://arxiv.org/pdf/2607.02770.pdf"
 DOCUMENT_PATH = "data/gemma4_technical_report.pdf"
 CACHE_DIR = ".cache"
@@ -49,22 +53,37 @@ CHUNK_OVERLAP = 0
 
 litert_lm.set_min_log_severity(litert_lm.LogSeverity.ERROR)
 
-# 1. Download Models and Document
-embed_model_path = hf_hub_download(
+
+def load_hf_model_file(repo_id: str, filename: str) -> str:
+    """Load model from local cache if present, otherwise download online."""
+    try:
+        path = hf_hub_download(repo_id=repo_id, filename=filename, local_files_only=True)
+        print(f"Loaded from cache: {filename}")
+        return path
+    except Exception:
+        print(f"Downloading {filename} from Hugging Face ({repo_id})...")
+        return hf_hub_download(repo_id=repo_id, filename=filename, local_files_only=False)
+
+
+# 1. Load or Download Models and Document
+embed_model_path = load_hf_model_file(
     repo_id="litert-community/embeddinggemma-2-740m-litert-lm",
     filename="embeddinggemma-2-740m.litertlm",
 )
-gemma_model_path = hf_hub_download(
+gemma_model_path = load_hf_model_file(
     repo_id="litert-community/gemma-4-E2B-it-litert-lm",
     filename="gemma-4-E2B-it.litertlm",
 )
 print(f"Embedding model: {embed_model_path}")
 print(f"Generation model: {gemma_model_path}")
 
-if not Path(DOCUMENT_PATH).exists():
+doc_file = Path(DOCUMENT_PATH)
+if not doc_file.exists():
     print(f"Downloading document: {DOCUMENT_URL}")
-    Path(DOCUMENT_PATH).parent.mkdir(parents=True, exist_ok=True)
+    doc_file.parent.mkdir(parents=True, exist_ok=True)
     urllib.request.urlretrieve(DOCUMENT_URL, DOCUMENT_PATH)
+else:
+    print(f"Using local document: {DOCUMENT_PATH}")
 print(f"Document: {DOCUMENT_PATH}")
 print("=" * 60)
 
