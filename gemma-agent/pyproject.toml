@@ -15,6 +15,14 @@ dependencies = [
     "a2a-sdk[http-server]>=1.0,<2",
     "aiohttp>=3.13.4",
     "google-cloud-logging>=3.12.0,<4.0.0",
+    "sentence-transformers>=6.0.0",
+    "torch",
+    "torchcodec>=0.16.0",
+    "torchvision",
+    "Pillow",
+    "litert-lm-api",
+    "edgeparse",
+    "qdrant-edge-py",
 ]
 requires-python = ">=3.11,<3.14"
 
