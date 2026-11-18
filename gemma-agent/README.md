@@ -153,14 +153,6 @@ Retrieve relevant images based on text queries with your fine-tuned multimodal m
 uv run python ../apps/fine_tuning_multimodal_embeddinggemma_with_sentence_transformers.py
 ```
 
-### Fine-Tuned Gemma 4 E2B QLoRA (Text-to-SQL)
-
-Generate SQL queries using the fine-tuned Gemma 4 E2B QLoRA adapter (`shogoorg/gemma-text-to-sql`):
-
-```bash
-uv run python ../apps/qlora_gemma_4_e2b.py
-```
-
 ### RAG with EmbeddingGemma 2 (Low-Spec CPU Edition)
 
 Simple two-stage RAG over a sample corporate knowledge base: EmbeddingGemma 2 retrieves the best category → best document, then Gemma 4 E2B answers the question using only the retrieved document.

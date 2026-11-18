@@ -10,14 +10,14 @@ This document reports the execution time and memory usage of the inference scrip
 | RAM | 3.7 GiB (+ 1.0 GiB swap) |
 | GPU | None |
 | OS | Ubuntu 24.04.3 LTS on WSL2 (kernel 6.6.87.2-microsoft-standard-WSL2) |
-| Python | 3.12.3 |
+| Python | 3.13.11 |
 | torch | 2.15.0 (CPU) |
-| transformers | 5.22.2 |
-| sentence-transformers | 6.2.0 |
-| litert-lm-api | 0.19.1 |
+| transformers | 5.23.0 |
+| sentence-transformers | 6.3.0 |
+| litert-lm-api | 0.19.2 |
 | qdrant-edge-py | 0.9.0 |
 | edgeparse | 0.3.2 |
-| huggingface_hub | 2.4.0 |
+| huggingface_hub | 1.33.0 |
 
 ## 2. Methodology
 
@@ -36,7 +36,7 @@ This document reports the execution time and memory usage of the inference scrip
 | `fine_tuning_embeddinggemma_with_sentence_transformers.py` | 50.1 s | 2.30 GiB | Fine-tuned text model (inference only) |
 | `fine_tuning_multimodal_embeddinggemma_with_sentence_transformers.py` | 121.2 s | 2.89 GiB | Fine-tuned multimodal model (inference only) |
 | `RAG_with_EmbeddingGemma.py` | 94.3 s | 2.18 GiB | Sentence Transformers + Gemma 4 E2B (LiteRT-LM), 4 questions |
-| `EmbeddingGemma2_LiteRT_RAG.py` | 51.3 s | 1.46 GiB | LiteRT-LM only, 2 questions, index reused |
+| `EmbeddingGemma2_LiteRT_RAG.py` | 67.5 s | 1.47 GiB | LiteRT-LM only, 2 questions, index reused |
 
 > Note: The `fine_tuning_*` scripts run inference using already fine-tuned models (`shogoorg/my-embeddinggemma-2-finetuned`, `shogoorg/my-multimodal-embeddinggemma-2-finetuned`). On the very first run without a local cache, additional time is spent downloading model weights.
 
@@ -139,13 +139,13 @@ RAG over the Gemma 4 technical report (45 chunks) with EmbeddingGemma 2 and Gemm
 | What architecture is Gemma 4 based on? | 18.9 s |
 | What context length does Gemma 4 support? | 12.0 s |
 
-- Total execution time: **51.3 s**; Peak memory: **1.46 GiB**.
+- Total execution time: **67.5 s**; Peak memory: **1.47 GiB**.
 - Answers are streamed, so the first words appear before generation finishes.
 
 ## 5. Key Findings
 
 1. **Loading the Sentence Transformers (PyTorch) model is the dominant fixed cost: 38–59 s.** For text-only scripts, actual encoding takes well under 10 s. In contrast, LiteRT-LM loads its models in about 1–3 s.
-2. **`EmbeddingGemma2_LiteRT_RAG.py` is the fastest and most memory-efficient end-to-end pipeline** (51 s, 1.46 GiB peak), even though it includes PDF retrieval and LLM generation.
+2. **`EmbeddingGemma2_LiteRT_RAG.py` is the fastest and most memory-efficient end-to-end pipeline** (67.5 s, 1.47 GiB peak), even though it includes PDF retrieval and LLM generation.
 3. **Image embedding on CPU is slow.** Two images take ~1 minute with the default token budget and 5–6 minutes with `max_soft_tokens=1120`. On low-spec PCs, keep the token budget small.
 4. **Memory is the tightest constraint.** Multimodal scripts reach 2.75–2.89 GiB on a 3.7 GiB machine. Disabling unused encoders (`config_kwargs={"audio_config": None}`, or vision too for text-only use) noticeably reduces memory use.
 5. **Per-question latency for RAG is about 5–20 s**, almost all of which is answer generation by Gemma 4 E2B.
