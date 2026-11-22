@@ -59,3 +59,31 @@ Ask the user: Option A (simple single-project) or Option B (full CI/CD pipeline 
 - **Run Python with `uv`**: `uv run python script.py`. Run `agents-cli install` first.
 - **Stop on repeated errors**: If the same error appears 3+ times, fix the root cause instead of retrying.
 - **Terraform conflicts** (Error 409): Use `terraform import` instead of retrying creation.
+
+---
+
+## Gemma 4 / EmbeddingGemma 2 / LiteRT-LM Guidelines
+
+Always consult the reference notebooks in `notebooks/` and scripts in `apps/` in this repository before modifying model code or API calls.
+
+### Gemma 4 (Fine-Tuning & Inference)
+- **Libraries**: Use `transformers>=5.10.1`, `peft>=0.19.0`, `trl`, `bitsandbytes`, and `torchao`.
+- **Model Loading**: Load Gemma 4 multimodal checkpoints with `AutoModelForMultimodalLM` and `AutoProcessor`.
+- **Chat Template & EOS**: Set `eos_token_id` to `[processor.tokenizer.convert_tokens_to_ids("<turn|>")]` when generating text.
+- **QLoRA Export Prep**: Run `merge_and_unload()` and save the full merged checkpoint (`merged_model/`) before converting to LiteRT-LM.
+- **Hardware Precision**: L4/A100 GPUs support `bfloat16` and optional `flash-attn`; T4 GPUs do not support native `bfloat16` (fall back to `fp16` if needed).
+
+### EmbeddingGemma 2 (`google/embeddinggemma-2`)
+- **Libraries**: Use `sentence-transformers>=6.0.0`, `transformers>=5.0.0,<6.0.0`, `torch`, `torchvision`, `torchcodec>=0.16.0`, and `Pillow`.
+- **Precision Constraint**: EmbeddingGemma 2 activations are **incompatible with `float16`**. Always use `bfloat16` (supported GPUs) or `float32` (CPU).
+- **Memory Optimization (Low-RAM / CPU Environments)**:
+  - Text-only (~271M params): pass `config_kwargs={"vision_config": None, "audio_config": None}` to `SentenceTransformer`.
+  - Vision + Text (~439M params): pass `config_kwargs={"audio_config": None}`.
+- **Task Prompts**: Apply built-in `prompt_name` values (e.g., `"STS"`, `"Retrieval-query"`, `"Retrieval-document"`, `"Clustering"`, `"Classification"`) for **text inputs only**. Pass image/audio/video inputs directly without text prefixes.
+- **Offline Execution**: Pass `local_files_only=True` to `SentenceTransformer`, set `HF_HUB_OFFLINE=1`, and reference local files under `./assets/`.
+
+### LiteRT-LM (`.litertlm` Export, Verification & Hub Upload)
+- **Converter V2**: Export `merged_model/` using `litert_torch.generative.export_hf.export(..., use_v2=True)` with `tf-nightly`, `litert-torch-nightly`, `litert-quantizer-nightly`, `litert-lm-nightly`, `litert-lm-builder`, and `litert-converter`, pinning ABI-sensitive packages (`numpy`, `pyarrow`, `pillow`).
+- **Quantization Recipes**: Default to `dynamic_wi4b32_octav_afp32` (~1.5 GB for E2B) or `gemma4_mixed48_b32_octav` for higher accuracy.
+- **Verification**: Validate `.litertlm` packages with `litert_lm.Engine` in Python or the local `litert-lm` CLI.
+- **Hugging Face Hub Uploads**: For large `.litertlm` files (~1.5 GB+), install `hf_transfer`, set `HF_HUB_ENABLE_HF_TRANSFER=1`, and verify file existence/size before `HfApi.upload_file` to prevent HTTP/Colab timeouts. Ensure the HF token has **Write** permissions.
